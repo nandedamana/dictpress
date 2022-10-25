@@ -32,6 +32,10 @@ You can follow these commands to set up a quick development environment using
 Docker. Please note that this is to speed up development and demos, not for
 production use.
 
+The only thing included in the Docker Compose file is a Postgres service, but
+combined with the dictpress option `--new-pgenv`, it helps you skip the
+task of manually setting up and linking a Postgres instance.
+
 After cloning the repo and entering it's directory:
 
 ```
