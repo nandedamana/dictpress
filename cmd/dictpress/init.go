@@ -216,7 +216,37 @@ func initLangs(ko *koanf.Koanf) data.LangMap {
 	return out
 }
 
-func generateNewFiles() error {
+func generateRandomPassword() []byte {
+	p := make([]byte, 12)
+	rand.Read(p)
+	pwd := []byte(fmt.Sprintf("%x", p))
+
+	for i, c := range pwd {
+		if mrand.Intn(4) == 1 {
+			pwd[i] = byte(unicode.ToUpper(rune(c)))
+		}
+	}
+	
+	return pwd
+}
+
+func generatePgenvFile() ([]byte, error) {
+	if _, err := os.Stat("pg.secret.env"); !os.IsNotExist(err) {
+		return nil, errors.New("pg.secret.env exists. Remove it to generate a new one")
+	}
+	
+	pgpwd := generateRandomPassword()
+	
+	b := []byte("POSTGRES_PASSWORD=" + string(pgpwd) + "\n")
+	
+	if err := os.WriteFile("pg.secret.env", b, 0644); err != nil {
+		return nil, err
+	}
+
+	return pgpwd, nil
+}
+
+func generateNewFiles(pgpwd []byte) error {
 	if _, err := os.Stat("config.toml"); !os.IsNotExist(err) {
 		return errors.New("config.toml exists. Remove it to generate a new one")
 	}
@@ -232,17 +262,12 @@ func generateNewFiles() error {
 	}
 
 	// Inject a random password.
-	p := make([]byte, 12)
-	rand.Read(p)
-	pwd := []byte(fmt.Sprintf("%x", p))
-
-	for i, c := range pwd {
-		if mrand.Intn(4) == 1 {
-			pwd[i] = byte(unicode.ToUpper(rune(c)))
-		}
-	}
-
+	pwd := generateRandomPassword()
 	b = bytes.Replace(b, []byte("dictpress_admin_password"), pwd, -1)
+
+	if pgpwd != nil {
+		b = bytes.Replace(b, []byte("dictpress_postgres_password"), pgpwd, -1)
+	}
 
 	if err := ioutil.WriteFile("config.toml", b, 0644); err != nil {
 		return err

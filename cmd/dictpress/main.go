@@ -72,6 +72,7 @@ func init() {
 	}
 
 	f.Bool("new-config", false, "generate a new sample config.toml file.")
+	f.Bool("new-pgenv", false, "generate pg.secret.env file with a random password.")
 	f.StringSlice("config", []string{"config.toml"},
 		"path to one or more config files (will be merged in order)")
 	f.String("site", "", "path to a site theme. If left empty, only HTTP APIs will be available.")
@@ -89,13 +90,31 @@ func init() {
 		os.Exit(0)
 	}
 
+	pgpwd := []byte(nil)
+
+	// Generate new Postgres env file.
+	if mkpgenv, _ := f.GetBool("new-pgenv"); mkpgenv {
+		var err error
+		if pgpwd, err = generatePgenvFile(); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Println("pg.secret.env generated.")
+	}
+
 	// Generate new config file.
 	if ok, _ := f.GetBool("new-config"); ok {
-		if err := generateNewFiles(); err != nil {
+		if err := generateNewFiles(pgpwd); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 		fmt.Println("config.toml generated. Edit and run --install.")
+		os.Exit(0)
+	}
+
+	// in case this program was called with --new-pgenv but not --new-config
+	if pgpwd != nil {
 		os.Exit(0)
 	}
 

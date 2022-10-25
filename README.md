@@ -26,3 +26,24 @@ Examples dictionaries:
 ## Getting started
 - [Download](https://github.com/knadh/dictpress/releases) the latest version.
 - [Read the docs](https://dict.press) for setup and usage instructions.
+
+## Develop with Docker
+You can follow these commands to set up a quick development environment using
+Docker. Please note that this is to speed up development and demos, not for
+production use.
+
+After cloning the repo and entering it's directory:
+
+```
+make dist
+./dictpress --new-pgenv --new-config
+docker compose up -d
+# wait for a couple of seconds
+./dictpress --install
+```
+
+Now you can run `dictpress` as usual:
+
+```
+./dictpress
+```
